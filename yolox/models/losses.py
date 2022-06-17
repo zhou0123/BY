@@ -88,8 +88,8 @@ class IOUloss3D(nn.Module):
         lt1_= torch.cat([pad2,x1_,y1_],dim=1)
         rt1_= torch.cat([pad2,x2_,y1_],dim=1)
         #import pdb;pdb.set_trace() 
-        en1 = ((lt1[:,1:] < rb1[:,1:]).prod(dim=1))&((lt1_[:,1:] < rb1_[:,1:]).prod(dim=1))
-        en1_ = (((lt1[:,1:] < rb1[:,1:]).prod(dim=1))&((lt1_[:,1:] < rb1_[:,1:]).prod(dim=1))).reshape(-1,1,1).repeat(1,8,3)
+        en1 = ((lt1[:,1:] < rb1[:,1:]).type(lt1.type()).prod(dim=1))&((lt1_[:,1:] < rb1_[:,1:]).type(lt1.type()).prod(dim=1))
+        en1_ = (((lt1[:,1:] < rb1[:,1:]).type(lt1.type()).prod(dim=1))&((lt1_[:,1:] < rb1_[:,1:]).type(lt1.type()).prod(dim=1))).reshape(-1,1,1).repeat(1,8,3)
         box_V= torch.stack([rb1,lb1,lt1,rt1,rb1_,lb1_,lt1_,rt1_],dim=1)*en1_
         box_V=eleVol_triangles(box_V)
 
@@ -115,9 +115,10 @@ class IOUloss3D(nn.Module):
         tlb1_= torch.cat([tpad2,tx1_,ty2_],dim=1)
         tlt1_= torch.cat([tpad2,tx1_,ty1_],dim=1)
         trt1_= torch.cat([tpad2,tx2_,ty1_],dim=1)
-        en2 = ((tlt1[:,1:] < trb1[:,1:]).prod(dim=1))&((tlt1_[:,1:] < trb1_[:,1:]).prod(dim=1))
-        en2_ = (((tlt1[:,1:] < trb1[:,1:]).prod(dim=1))&((tlt1_[:,1:] < trb1_[:,1:]).prod(dim=1))).reshape(-1,1,1).repeat(1,8,3)
+        en2 = ((tlt1[:,1:] < trb1[:,1:]).type(tlt1.type()).prod(dim=1))&((tlt1_[:,1:] < trb1_[:,1:]).type(tlt1.type()).prod(dim=1))
+        en2_ = (((tlt1[:,1:] < trb1[:,1:]).type(tlt1.type()).prod(dim=1))&((tlt1_[:,1:] < trb1_[:,1:]).type(tlt1.type()).prod(dim=1))).reshape(-1,1,1).repeat(1,8,3)
         tbox_V= torch.stack([trb1,tlb1,tlt1,trt1,trb1_,tlb1_,tlt1_,trt1_],dim=1)*en2_
+        tbox_V = tbox_V.to('cuda')
         tbox_V=eleVol_triangles(tbox_V)
        
 
@@ -141,8 +142,8 @@ class IOUloss3D(nn.Module):
         lb11_= torch.cat([padd2,xx1_,yy2_],dim=1)
         lt11_= torch.cat([padd2,xx1_,yy1_],dim=1)
         rt11_= torch.cat([padd2,xx2_,yy1_],dim=1)
-        en3 = ((lt11[:,1:] < rb11[:,1:]).prod(dim=1))&((lt11_[:,1:] < rb11_[:,1:]).prod(dim=1))
-        en3_ = (((lt11[:,1:] < rb11[:,1:]).prod(dim=1))&((lt11_[:,1:] < rb11_[:,1:]).prod(dim=1))).reshape(-1,1,1).repeat(1,8,3)
+        en3 = ((lt11[:,1:] < rb11[:,1:]).type(lt11.type()).prod(dim=1))&((lt11_[:,1:] < rb11_[:,1:]).type(lt11.type()).prod(dim=1))
+        en3_ = (((lt11[:,1:] < rb11[:,1:]).type(lt11.type()).prod(dim=1))&((lt11_[:,1:] < rb11_[:,1:]).type(lt11.type()).prod(dim=1))).reshape(-1,1,1).repeat(1,8,3)
         box_VV= torch.stack([rb11,lb11,lt11,rt11,rb11_,lb11_,lt11_,rt11_],dim=1)*en3_ # [N-1,8,3]
         box_VV = eleVol_triangles(box_VV)
         
@@ -203,6 +204,6 @@ def eleVol_triangles(NXYZ):
     
     all_ = torch.stack([NXYZ_0,NXYZ_1,NXYZ_center],dim=4)
 
-    all_ = torch.sum(torch.det(all_),dim=[1,2])/6 #N 6 4
+    all_ = torch.sum(torch.linalg.det(all_),dim=[1,2])/6 #N 6 4
     # N 
     return all_
